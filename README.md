@@ -1,14 +1,14 @@
-# Posh-LEXPMO
-PowerShell module using Posh-ACME to automate Let's Encrypt certificate generation and renewal for Milestone XProtect Mobile Server
+# Posh-XProtectMobile
+PowerShell module intended to be used in a script to automate the certificate renewal process and ensure the Milestone XProtect Mobile Server is updated to use the new certificate.
 
 ## Work in progress
 
-This module is intended to use Posh-ACME to automate LetsEncrypt cert generation and then take care of the netsh commands to take the new cert hash and bind it to whatever the Mobile Server's HTTPS IP/Port are set to.
+After testing the Posh-ACME module for automating Let's Encrypt certificate generation, I made this module to simplify the process of updating the Mobile Server to use a given certificate.
 
-The default IP for http/https binding for Mobile Server is "+" which means "all interfaces". And the default HTTPS port is 8082. This module will read this information from VideoOS.MobileServer.Service.exe.config and use it to find/add/update/remove the certificate binding for that Ip:Port combination.
+The default IP for http/https binding for Mobile Server is "+" which means "all interfaces". And the default HTTPS port is 8082. This module will read this information from VideoOS.MobileServer.Service.exe.config and use it to find/add/update/remove the certificate binding for that Ip:Port combination using netsh http add/delete/update sslcert.
 
 Currently a Get-MobileServerInfo cmdlet is used to return a PSCustomObject with the current installation path, http/s IP/Ports, and certificate hash aka thumbprint if available.
 
 Set-MobileServerCertificate will take an X509Certificate (get-childitem cert:\LocalMachine\My) or a Thumbprint string, and add/update the binding via netsh, and if successful, restart the Mobile Server service to for the change to take effect immediately.
 
-More work is needed to add other useful commands including the ability to remove the current certificate all together, and to merge Posh-ACME cert generation with the set-mobileservercertificate cmdlet, and perhaps a cmdlet to setup automation for this via Task Scheduler so that the user doesn't need to ever open Task Scheduler to setup automation themselves.
+Later on, this readme will be updated with a sample script which combines certificate generation/renewal using Posh-ACME with the Set-MobileServerCertificate cmdlet which can be saved as a *.ps1 file and setup in Windows as a daily scheduled task to ensure that when the certificate is up for renewal, it is automatically renewed and applied to the Mobile Server in a seamless fashion.
