@@ -1,0 +1,16 @@
+PSTOPIC
+    about_Posh-XProtectMobile
+
+SHORT DESCRIPTION
+    Milestone XProtect Mobile Server helper module
+
+LONG DESCRIPTION
+    Assists with retrieving basic information about the local Milestone XProtect Mobile Server installation, and setting or removing the current SSL/TLS certificate.
+
+DETAILED DESCRIPTION
+    This module assists administrators by providing a simple cmdlet, Set-MobileServerCertificate, which simplifies the process of adding or updating the binding for 
+    Milestone XProtect Mobile Server. This is done via the 'netsh http [add|update] sslcert' command which requires the current IP:Port used for HTTPS communication.
+
+    The current HTTPS IP:Port values are retrieved from the VideoOS.MobileServer.Service.exe.config file present in the Mobile Server installation directory.
+
+    The installation directory for Milestone XProtect Mobile Server is found in the registry path HKLM:\SOFTWARE\WOW6432Node\Milestone\XProtect Mobile Server\.
