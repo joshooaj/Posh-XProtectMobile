@@ -54,13 +54,12 @@ function Install-CertificateAutomation {
             $scriptPath = Join-Path $ScriptDirectory "renew-certificate.ps1"
             $logPath = Join-Path $ScriptDirectory "log.txt"
             if (!(Test-Path $ScriptDirectory)) {
-                New-Item $ScriptDirectory -ItemType Directory
+                New-Item $ScriptDirectory -ItemType Directory | Out-Null
             }
             $scriptBlock = {
                 param([string]$LogPath)
                 function WriteLog {
                     Param ([string]$message)
-                    $logPath = Join-Path 
                     Add-Content -Path $LogPath -Value "$(Get-Date) - $message"
                 }
         
@@ -96,9 +95,9 @@ function Install-CertificateAutomation {
                 TaskName = $taskName
                 RunLevel = "Highest"
                 User = $credential.UserName
-                Password = ConvertFrom-SecureString $credential.Password
+                Password = ($credential.Password | ConvertTo-UnsecureString)
             }
-            Register-ScheduledTask @taskParams
+            Register-ScheduledTask @taskParams | Out-Null
             $taskParams = $null
         
         
