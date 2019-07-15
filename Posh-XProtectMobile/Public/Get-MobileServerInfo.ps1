@@ -4,12 +4,12 @@ function Get-MobileServerInfo {
     process {
         $mobServerPath = Get-ItemPropertyValue -Path 'HKLM:\SOFTWARE\WOW6432Node\Milestone\XProtect Mobile Server' -Name INSTALLATIONFOLDER
         [Xml]$doc = Get-Content "$mobServerPath.config"
-        
+
         $xpath = "/configuration/ManagementServer/Address/add[@key='Ip']"
         $msIp = $doc.SelectSingleNode($xpath).Attributes['value'].Value
         $xpath = "/configuration/ManagementServer/Address/add[@key='Port']"
         $msPort = $doc.SelectSingleNode($xpath).Attributes['value'].Value
-        
+
         $xpath = "/configuration/HttpMetaChannel/Address/add[@key='Port']"
         $httpPort = [int]::Parse($doc.SelectSingleNode($xpath).Attributes['value'].Value)
         $xpath = "/configuration/HttpMetaChannel/Address/add[@key='Ip']"
@@ -40,7 +40,7 @@ function Get-MobileServerInfo {
     <#
     .SYNOPSIS
         Gets details about the local Milestone XProtect Mobile Server installation.
-        
+
     .DESCRIPTION
         Gets details about the local Milestone XProtect Mobile Server installation.
         Properties include

@@ -5,7 +5,7 @@ function ConvertTo-UnsecureString {
         [securestring]
         $SecureString
     )
-    
+
     process {
         (New-Object pscredential ('none', $SecureString)).GetNetworkCredential().Password
     }
@@ -15,8 +15,8 @@ function ConvertTo-UnsecureString {
         Converts a secure string back into an unsecure, plain text string.
 
     .DESCRIPTION
-        Converts a secure string back into an unsecure, plain text string. Useful when you need to store a 
-        sensitive value securely, but expose it temporarily in order to pass it to a command which does not 
+        Converts a secure string back into an unsecure, plain text string. Useful when you need to store a
+        sensitive value securely, but expose it temporarily in order to pass it to a command which does not
         accept a [securestring] property.
 
     .PARAMETER Input

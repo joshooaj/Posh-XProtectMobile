@@ -7,17 +7,17 @@ function Get-MobileServerSslCertThumbprint {
     )
     process {
         $netshOutput = [string](netsh.exe http show sslcert ipport=$IPPort)
-        
+
         if (!$netshOutput.Contains('Certificate Hash')) {
             Write-Error "No SSL certificate binding found for $ipPort"
             return
         }
-        
+
         if (!($netshOutput -match "Certificate Hash\s+:\s+(\w+)\s+")) {
             Write-Error "Certificate Hash not found for $ipPort"
             return
         }
-        
+
         $Matches[1]
     }
 
@@ -35,7 +35,7 @@ function Get-MobileServerSslCertThumbprint {
     .EXAMPLE
         Get-MobileServerSslCertThumbprint 0.0.0.0:8082
 
-        Gets the sslcert thumbprint for the binding found matching 0.0.0.0:8082 which is the default HTTPS IP and Port for 
+        Gets the sslcert thumbprint for the binding found matching 0.0.0.0:8082 which is the default HTTPS IP and Port for
         XProtect Mobile Server. The value '0.0.0.0' represents 'all interfaces' and 8082 is the default https port.
     #>
 }
