@@ -1,14 +1,43 @@
-# Posh-XProtectMobile
-PowerShell module intended to be used in a script to automate the certificate renewal process and ensure the Milestone XProtect Mobile Server is updated to use the new certificate.
+# TOPIC
+about_Posh-XProtectMobile
 
-## Work in progress
+# SHORT DESCRIPTION
+Milestone XProtect Mobile Server helper module
 
-After testing the Posh-ACME module for automating Let's Encrypt certificate generation, I made this module to simplify the process of updating the Mobile Server to use a given certificate.
+# LONG DESCRIPTION
+This module assists administrators by providing a simple cmdlet, Set-MobileServerCertificate, which simplifies the process of adding or updating the binding for 
+Milestone XProtect Mobile Server. This is done via the 'netsh http [add|update] sslcert' command which requires the current IP:Port used for HTTPS communication.
 
-The default IP for http/https binding for Mobile Server is "+" which means "all interfaces". And the default HTTPS port is 8082. This module will read this information from VideoOS.MobileServer.Service.exe.config and use it to find/add/update/remove the certificate binding for that Ip:Port combination using netsh http add/delete/update sslcert.
+The current HTTPS IP:Port values are retrieved from the VideoOS.MobileServer.Service.exe.config file present in the Mobile Server installation directory.
 
-Currently a Get-MobileServerInfo cmdlet is used to return a PSCustomObject with the current installation path, http/s IP/Ports, and certificate hash aka thumbprint if available.
+The installation directory for Milestone XProtect Mobile Server is found in the registry path HKLM:\SOFTWARE\WOW6432Node\Milestone\XProtect Mobile Server\.
 
-Set-MobileServerCertificate will take an X509Certificate (get-childitem cert:\LocalMachine\My) or a Thumbprint string, and add/update the binding via netsh, and if successful, restart the Mobile Server service to for the change to take effect immediately.
+# EXAMPLES
+If using in conjunction with Posh-ACME, you may use the modules like so...
+```powershell
+$parameters = @{
+    ...
+}
+New-PACertificate @$parameters | Set-MobileServerCertificate
+```
+Afterward, you might schedule a task in Windows to execute the following PowerShell daily:
 
-Later on, this readme will be updated with a sample script which combines certificate generation/renewal using Posh-ACME with the Set-MobileServerCertificate cmdlet which can be saved as a *.ps1 file and setup in Windows as a daily scheduled task to ensure that when the certificate is up for renewal, it is automatically renewed and applied to the Mobile Server in a seamless fashion.
+```powershell
+Submit-Renewal | Set-MobileServerCertificate
+```
+
+Doing so will ensure that the certificate is attempted to be renewed daily, but Posh-ACME will only send a request for a new certificate after 60 days from the date of issue.
+
+Alternatively, you may have some other mechanism for generating and renewing certificates. As long as you have installed your certificate to Cert:\LocalMachine\My 
+and it includes the private key, you can pipe the certificate or thumprint into Set-MobileServerCertificate.
+```powershell
+Get-ChildItem Cert:\LocalMachine\My | ? Subject -like '*mobile.example.com*' | Set-MobileServerCertificate
+```
+
+# KEYWORDS
+Milestone, XProtect, Mobile Server, Let's Encrypt, Certificate, SSL/TLS
+
+# SEE ALSO
+- Project: https://github.com/jhendricks123/Posh-XProtectMobile
+- Video Tutorial: https://www.youtube.com/playlist?list=PLKZuMVbJCW3MhfIltEOwYDijFuU-s3Kiu
+- Milestone KB: https://supportcommunity.milestonesys.com/SCRedir?art=000016329&lang=en_US
