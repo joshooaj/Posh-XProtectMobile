@@ -120,4 +120,51 @@ function Install-CertificateAutomation {
             throw
         }
     }
+
+    <#
+    .SYNOPSIS
+        Uses Posh-ACME to request a Let's Encrypt certificate and configure Mobile Server to use it
+
+    .DESCRIPTION
+        Uses Posh-ACME to request a Let's Encrypt certificate and configure Mobile Server to use it, then 
+        creates a Scheduled Task to run daily, and execute a renewal script which will handle certificate 
+        renewal when the certificate becomes eligible for renewal - typically 60 days after issue.
+
+        When the certificate is renewed, it will be installed into the Windows certificate store and the 
+        old certificate will be removed from the certificate store. The Milestone XProtect Mobile Server 
+        service will be restarted so that it automatically uses the renewed certificates going forward.
+
+    .PARAMETER Domain
+        The domain for which you will request a Let's Encrypt certificate. See Get-Help New-PACertificate for more info.
+
+    .PARAMETER Contact
+        The email address associated with this domain for the purpose of renewal notifications. See Get-Help New-PACertificate for more info.
+
+    .PARAMETER DnsPlugin
+        The DnsPlugin to use for handling DNS challenges. See Get-Help New-PACertificate for more info.
+
+    .PARAMETER PluginArgs
+        A hashtable with the necessary parameters for the chosen DnsPlugin. See Get-Help New-PACertificate for more info.
+
+    .PARAMETER ScriptDirectory
+        The path where the renew-certificate.ps1 script will be saved, and the log.txt file will be written to.
+
+        A scheduled task named Posh-ACME Certificate Renewal will be created to run the renew-certificate.ps1 script daily,
+        and this script will append information to log.txt in the same path.
+
+    .EXAMPLE
+        $InstallParams = @{
+            Domain = test.example.com
+            Contact = admin@example.com
+            DnsPlugin = Dynu
+            PluginArgs = @{DynuClientID='xxxx';DynuSecret='xxxx'}
+            ScriptDirectory = "C:\scripts"
+        }
+        Install-CertificateAutomation @InstallParams
+
+        Requests a Let's Encrypt certificate for test.example.com, uses Dynu DNS to handle the ACME-protocol DNS challenge, 
+        binds the certificate to the Mobile Server's HTTPS port using 'netsh http add|update sslcert', restarts the Mobile 
+        Server service, creates a .PS1 certificate renewal script in C:\scripts\ and a scheduled task to call this script 
+        daily at 2AM, logging the result to C:\scripts\log.txt.
+    #>
 }
