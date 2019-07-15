@@ -8,7 +8,7 @@ function Start-LECertSetupUsingDynu {
         if ((Get-Module Posh-XProtectMobile).Version -lt 0.5) {
             Install-Module Posh-XProtectMobile -Force -Verbose
         }
-        
+
         $InstallParams = @{
             Domain = Read-Host "Domain name"
             Contact = Read-Host "E-mail address for renewal notifications"
@@ -19,7 +19,7 @@ function Start-LECertSetupUsingDynu {
             }
             ScriptDirectory = "C:\scripts"
         }
-        
+
         Install-CertificateAutomation @InstallParams -WhatIf:$WhatIfPreference -Verbose:$VerbosePreference
     }
 
