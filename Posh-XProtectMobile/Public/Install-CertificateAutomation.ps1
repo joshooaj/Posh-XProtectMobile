@@ -1,0 +1,124 @@
+function Install-CertificateAutomation {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory, Position = 1)]
+        [string]
+        $Domain,
+        [Parameter(Position = 2)]
+        [string]
+        $Contact,
+        [Parameter(Position = 3)]
+        [string]
+        $DnsPlugin,
+        [Parameter(Position = 4)]
+        [hashtable]
+        $PluginArgs,
+        [Parameter(Position = 5)]
+        [string]
+        $ScriptDirectory = "C:\scripts"
+    )
+    
+    begin {
+        if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+            throw "This command requires elevation. Please run as administrator."
+        }
+
+        Write-Output "Setting Execution Policy to RemoteSigned for the current process"
+        Set-ExecutionPolicy RemoteSigned -Scope Process
+
+        if (!(Get-Module Posh-ACME)) {
+            Install-Module Posh-ACME -Repository PSGallery -Verbose
+        }
+    }
+    
+    process {
+        try {
+            Write-Output "Testing certificate request against staging server"
+            Set-PAServer LE_STAGE
+            New-PACertificate -force $domain -AcceptTOS -Contact $contact -DnsPlugin $DnsPlugin -PluginArgs $PluginArgs -Install -ErrorAction Stop -Verbose
+            Write-Output "Successfully installed certificate from staging server"
+
+            Write-Output "Removing test certificate"
+            $stagingCert = Get-PACertificate
+            Get-ChildItem Cert:\LocalMachine\My | Where-Object Thumbprint -eq $stagingCert.Thumbprint | Remove-Item
+
+            Write-Output "Installing production certificate"
+            Set-PAServer LE_PROD
+            New-PACertificate -force $domain -AcceptTOS -Contact $contact -DnsPlugin $DnsPlugin -PluginArgs $PluginArgs -Install -ErrorAction Stop -Verbose
+            Write-Output "Certificate installed to Cert:\LocalMachine\My"
+
+            Write-Output "Binding certificate to Mobile Server"
+            Get-PACertificate | Set-MobileServerCertificate -ErrorAction Stop -Verbose
+        
+            Write-Output "Setting up automatic certificate renewal script in $ScriptDirectory"
+            $scriptPath = Join-Path $ScriptDirectory "renew-certificate.ps1"
+            $logPath = Join-Path $ScriptDirectory "log.txt"
+            if (!(Test-Path $ScriptDirectory)) {
+                New-Item $ScriptDirectory -ItemType Directory
+            }
+            $scriptBlock = {
+                param([string]$LogPath)
+                function WriteLog {
+                    Param ([string]$message)
+                    $logPath = Join-Path 
+                    Add-Content -Path $LogPath -Value "$(Get-Date) - $message"
+                }
+        
+                try {
+        
+                    $thumbprint = (Get-PACertificate).Thumbprint
+                    $cert = Submit-Renewal -WarningAction Stop -ErrorAction Stop
+                    $cert | Set-MobileServerCertificate
+        
+                    WriteLog "New certificate installed with thumbprint $($cert.Thumbprint)"
+                    WriteLog "Removing old certificate with thumbprint $thumbprint"
+        
+                    Get-ChildItem Cert:\LocalMachine\My |
+                        Where-Object Thumbprint -eq $thumbprint |
+                        Remove-Item
+        
+                } catch {
+                    WriteLog $_.Exception.Message
+                    throw
+                }
+            }
+            Set-Content -Path $scriptPath -Value $scriptBlock
+        
+            Write-Output "Registering a new scheduled task to run the renewal script daily"
+            $taskName = 'Posh-ACME Certificate Renewal'
+            $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -File ""$scriptPath"" $logPath"
+            $trigger = New-ScheduledTaskTrigger -Daily -At 2am
+            Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue
+            $credential = Get-Credential -Message "Enter your password to setup the Scheduled Task" -UserName ([System.Security.Principal.WindowsIdentity]::GetCurrent().Name)
+            $taskParams = @{
+                Action = $action
+                Trigger = $trigger
+                TaskName = $taskName
+                RunLevel = "Highest"
+                User = $credential.UserName
+                Password = ConvertFrom-SecureString $credential.Password
+            }
+            Register-ScheduledTask @taskParams
+            $taskParams = $null
+        
+        
+            # Edits Windows hosts file so that on the local machine, the $domain address always routes to the local machine
+            Write-Output "Adding $domain to the local hosts file"
+            $params = @{
+                Path = "$($env:SystemRoot)\System32\drivers\etc\hosts"
+                Value = "`r`n127.0.0.1  $domain"
+            }
+            Add-Content @params
+        
+        
+            # Launch the default web browser to the mobile server's HTTPS page
+            $mobileServer = Get-MobileServerInfo
+            $url = "https://$($domain):$($mobileServer.HttpsPort)"
+            Write-Output "Finished! Opening a web browser to $url"
+            Start-Process $url
+        
+        } catch {
+            throw
+        }
+    }
+}
