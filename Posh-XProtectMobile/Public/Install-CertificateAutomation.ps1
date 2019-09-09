@@ -26,8 +26,8 @@ function Install-CertificateAutomation {
         Write-Output "Setting Execution Policy to RemoteSigned"
         Set-ExecutionPolicy RemoteSigned -WhatIf:$WhatIfPreference
 
-        if (!(Get-Module Posh-ACME)) {
-            Install-Module Posh-ACME -Repository PSGallery -Verbose:$VerbosePreference -WhatIf:$WhatIfPreference
+        if (!(Get-Module -Name Posh-ACME -ListAvailable)) {
+            Install-Module -Name Posh-ACME -Repository PSGallery -Verbose:$VerbosePreference -WhatIf:$WhatIfPreference
         }
     }
 
