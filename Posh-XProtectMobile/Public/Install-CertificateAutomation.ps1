@@ -36,7 +36,7 @@ function Install-CertificateAutomation {
             if ($PSCmdlet.ShouldProcess("Install test certificate")) {
                 Write-Output "Testing certificate request against staging server"
                 Set-PAServer LE_STAGE
-                New-PACertificate -force $domain -AcceptTOS -Contact $contact -DnsPlugin $DnsPlugin -PluginArgs $PluginArgs -Install -ErrorAction Stop -Verbose:$VerbosePreference
+                New-PACertificate -Domain $domain -FriendlyName $domain -AcceptTOS -Contact $contact -DnsPlugin $DnsPlugin -PluginArgs $PluginArgs -Force -Install -ErrorAction Stop -Verbose:$VerbosePreference
                 Write-Output "Successfully installed certificate from staging server"
 
                 Write-Output "Removing test certificate"
@@ -47,7 +47,7 @@ function Install-CertificateAutomation {
             if ($PSCmdlet.ShouldProcess("Install production certificate")) {
                 Write-Output "Installing production certificate"
                 Set-PAServer LE_PROD
-                New-PACertificate -force $domain -AcceptTOS -Contact $contact -DnsPlugin $DnsPlugin -PluginArgs $PluginArgs -Install -ErrorAction Stop -Verbose:$VerbosePreference
+                New-PACertificate -Domain $domain -FriendlyName $domain -AcceptTOS -Contact $contact -DnsPlugin $DnsPlugin -PluginArgs $PluginArgs -Force -Install -ErrorAction Stop -Verbose:$VerbosePreference
                 Write-Output "Certificate installed to Cert:\LocalMachine\My"
             }
 
